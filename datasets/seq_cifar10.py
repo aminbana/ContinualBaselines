@@ -30,7 +30,7 @@ class MyCIFAR10(CIFAR10):
             new_labels = []
             new_data = []
             targets_ = np.array (self.targets)
-            p = 0.1
+            p = 0.01
             n_classes = len (np.unique(targets_))
             n_samples_per_class = len (self.targets) / n_classes
             for y in np.unique(targets_):
