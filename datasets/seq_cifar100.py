@@ -22,6 +22,29 @@ class MyCIFAR100(CIFAR100):
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False):
         self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
         super(MyCIFAR100, self).__init__(root, train, transform, target_transform, download)
+        if train:
+            new_labels = []
+            new_labels = []
+            new_data = []
+            targets_ = np.array (self.targets)
+            p = 0.1
+            n_classes = len (np.unique(targets_))
+            n_samples_per_class = len (self.targets) / n_classes
+            for y in np.unique(targets_):
+                n_samples_in_this_class = 0
+                data_y = self.data[targets_ == y]
+                
+                for d in self.data[targets_ == y]:
+                    if np.random.rand(1) < p:
+                        new_labels.append(y)
+                        new_data.append(d)
+                        n_samples_in_this_class += 1
+            print (len(new_labels))
+            perm = np.random.permutation(len(new_labels))
+            self.targets = list (np.array(new_labels)[perm])
+            self.data = np.array(new_data)[perm]
+        
+
 
     def __getitem__(self, index):
         img, target = self.data[index], self.targets[index]
