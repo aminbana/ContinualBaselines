@@ -22,7 +22,7 @@ class MyCIFAR100(CIFAR100):
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False):
         self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
         super(MyCIFAR100, self).__init__(root, train, transform, target_transform, download)
-        if train:
+        if train and False:
             new_labels = []
             new_labels = []
             new_data = []
