@@ -25,7 +25,7 @@ class MyCIFAR10(CIFAR10):
                  target_transform=None, download=False) -> None:
         self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
         super(MyCIFAR10, self).__init__(root, train, transform, target_transform, download)
-        if train:
+        if train and False:
             new_labels = []
             new_labels = []
             new_data = []
