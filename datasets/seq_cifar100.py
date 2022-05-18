@@ -3,7 +3,6 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100
 import torchvision.transforms as transforms
 from backbone.ResNet import ResNet18
 import torch.nn.functional as F
@@ -16,35 +15,60 @@ from datasets.transforms.denormalization import DeNormalize
 import torch
 from typing import Tuple
 import numpy as np
+from torch.utils.data import Dataset
 
-class MyCIFAR100(CIFAR100):
+from PIL import Image
+import glob
+import numpy as np
+
+
+def get_tiny_imagenet_data():
+    
+    all_images = []
+    
+
+    folders = glob.glob('./data/tiny-imagenet-200/train/*')
+    for folder in folders:
+        files = glob.glob(folder + '/images/*.JPEG')
+        for file in files:
+            train_image = Image.open(file)
+            train_image = train_image.convert('RGB')
+            all_images.append(np.asarray(train_image))
+            train_image.close()
+            
+    print('tinyimagenet dataset size: {}'.format(len(all_images)))
+    targets = torch.arange(200).repeat_interleave(500)        
+    return all_images, targets
+
+
+def get_tiny_imagenet_test_data():
+    
+    with open('./data/tiny-imagenet-200/val/val_annotations.txt') as f:
+        test_data_annotations = f.readlines()
+    
+    all_test_images = []
+    folders = glob.glob('./data/tiny-imagenet-200/train/*')
+    
+    for folder in folders:
+        category_name = folder.split('/')[-1]
+        for test_data_anno in test_data_annotations:
+            test_data_anno = test_data_anno.split('\t')
+            if test_data_anno[1] == category_name:
+                image = Image.open('./data/tiny-imagenet-200/val/images/' + test_data_anno[0])
+                image = image.convert('RGB')
+                all_test_images.append(np.asarray(image))
+    targets = torch.arange(200).repeat_interleave(50)
+    return all_test_images, targets
+
+class MyCIFAR100(Dataset):
 
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False):
         self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
-        super(MyCIFAR100, self).__init__(root, train, transform, target_transform, download)
-        if train and False:
-            new_labels = []
-            new_labels = []
-            new_data = []
-            targets_ = np.array (self.targets)
-            p = 0.1
-            n_classes = len (np.unique(targets_))
-            n_samples_per_class = len (self.targets) / n_classes
-            for y in np.unique(targets_):
-                n_samples_in_this_class = 0
-                data_y = self.data[targets_ == y]
-                
-                for d in self.data[targets_ == y]:
-                    if np.random.rand(1) < p:
-                        new_labels.append(y)
-                        new_data.append(d)
-                        n_samples_in_this_class += 1
-            print (len(new_labels))
-            perm = np.random.permutation(len(new_labels))
-            self.targets = list (np.array(new_labels)[perm])
-            self.data = np.array(new_data)[perm]
-        
+        # super(MyCIFAR100, self).__init__(root, train, transform, target_transform, download)
+        self.transform = transform
+        self.target_transform = target_transform
 
+        self.data, self.targets = get_tiny_imagenet_data() if train else get_tiny_imagenet_test_data()
 
     def __getitem__(self, index):
         img, target = self.data[index], self.targets[index]
@@ -72,7 +96,7 @@ class SequentialCIFAR100(ContinualDataset):
 
     NAME = 'seq-cifar100'
     SETTING = 'class-il'
-    N_CLASSES_PER_TASK = 10
+    N_CLASSES_PER_TASK = 20
     N_TASKS = 10
     TRANSFORM = transforms.Compose(
             [transforms.RandomCrop(32, padding=4),
